@@ -15,12 +15,18 @@ var stopwatch = Stopwatch.StartNew();
 // un-pipelined commands incur the added cost of an extra round trip
 var pingTasks = new List<Task<TimeSpan>>();
 
+// Batches allow you to more intentionally group together the commands that you want to send to Redis.
+// If you employee a batch, all commands in the batch will be sent to Redis in one contiguous block, with no
+// other commands from the client interleaved. Of course, if there are other clients to Redis, commands from those
+// other clients may be interleaved with your batched commands.
+var batch = db.CreateBatch();
+
 for (var i = 0; i < 1000; i++)
 {
-    pingTasks.Add(db.PingAsync());
+    pingTasks.Add(batch.PingAsync());
 }
 
+batch.Execute();
 await Task.WhenAll(pingTasks);
-
-Console.WriteLine($"1000 automatically pipelined tasks took: {stopwatch.ElapsedMilliseconds}ms to execute, first result: {pingTasks[0].Result}");
+Console.WriteLine($"1000 batched commands took: {stopwatch.ElapsedMilliseconds}ms to execute, first result: {pingTasks[0].Result}");
 // end Challenge
