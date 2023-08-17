@@ -13,10 +13,14 @@ var stopwatch = Stopwatch.StartNew();
 
 // TODO for Coding Challenge Start here on starting-point branch
 // un-pipelined commands incur the added cost of an extra round trip
+var pingTasks = new List<Task<TimeSpan>>();
+
 for (var i = 0; i < 1000; i++)
 {
-    await db.PingAsync();
+    pingTasks.Add(db.PingAsync());
 }
 
-Console.WriteLine($"1000 un-pipelined commands took: {stopwatch.ElapsedMilliseconds}ms to execute");
+await Task.WhenAll(pingTasks);
+
+Console.WriteLine($"1000 automatically pipelined tasks took: {stopwatch.ElapsedMilliseconds}ms to execute, first result: {pingTasks[0].Result}");
 // end Challenge
